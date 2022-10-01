@@ -34,7 +34,8 @@ def main():
 
   parser = OptionParser()
   parser.add_option("--debug", "-d", dest="debug", action="store_true", help="Turn on debug mode", default=False)
-  (options, _) = parser.parse_args()
+  parser.add_option("--type", dest="type", action="store_true")
+  (options, type) = parser.parse_args()
 
   if options.debug == True:
     logging.basicConfig(    
@@ -48,6 +49,7 @@ def main():
       level=logging.INFO,
       datefmt='%Y-%m-%d %H:%M:%S'
     )
+  
 
   logging.info("Welcome to Mechmania 28 Python bot!")
 

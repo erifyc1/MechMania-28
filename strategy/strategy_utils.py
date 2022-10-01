@@ -9,82 +9,6 @@ import math
 import numpy as np
 import logging
 
-class Strategy(object):
-    """Before the game starts, pick a class for your bot to start with.
-
-    :returns: A game.CharacterClass Enum.
-    """
-    @abstractmethod
-    def strategy_initialize(self, my_player_index: int) -> None:
-        self.index = my_player_index
-        self.curr_action = Position(0,0)
-        self.curr_pos_attack = 0
-        if my_player_index == 0:
-            return game.character_class.CharacterClass.KNIGHT
-        if my_player_index == 1:
-            return game.character_class.CharacterClass.WIZARD
-        if my_player_index == 2:
-            return game.character_class.CharacterClass.WIZARD
-        else:
-            return game.character_class.CharacterClass.KNIGHT
-
-    """Each turn, decide if you should use the item you're holding. Do not try to use the
-    legendary Item.None!
-
-    :param gameState:     A provided GameState object, contains every piece of info on the game board.
-    :param myPlayerIndex: You may find out which player on the board you are.
-
-    :returns: If you want to use your item
-    """
-    @abstractmethod
-    def use_action_decision(self, game_state: GameState, my_player_index: int) -> bool:
-        return True 
-
-    """Each turn, pick a position on the board that you want to move towards. Be careful not to
-    fall out of the board!
-
-    :param gameState:     A provided GameState object, contains every piece of info on the game board.
-    :param myPlayerIndex: You may find out which player on the board you are.
-
-    :returns: A game.Position object.
-    """
-    @abstractmethod
-    def move_action_decision(self, game_state: GameState, my_player_index: int) -> Position:
-        # our_player = game_state.player_state_list[my_player_index]
-        # our_player.position = self.curr_action
-        if (my_player_index == 1 or my_player_index == 2 or my_player_index == 3 or my_player_index == 0):
-            pos, _  = choosePositionAndAttack(game_state, my_player_index)
-            return pos
-        return Position(0,0)
-
-    """Each turn, pick a player you would like to attack. Feel free to be a pacifist and attack no
-    one but yourself.
-
-    :param gameState:     A provided GameState object, contains every piece of info on the game board.
-    :param myPlayerIndex: You may find out which player on the board you are.
-
-    :returns: Your target's player index.
-    """
-    @abstractmethod
-    def attack_action_decision(self, game_state: GameState, my_player_index: int) -> int:
-        _, attack = choosePositionAndAttack(game_state, my_player_index)
-        return attack#self.curr_pos_attack
-
-    """Each turn, pick an item you want to buy. Return Item.None if you don't think you can
-    afford anything.
-
-    :param gameState:     A provided GameState object, contains every piece of info on the game board.
-    :param myPlayerIndex: You may find out which player on the board you are.
-
-    :returns: A game.Item object.
-    """
-    @abstractmethod
-    def buy_action_decision(self, game_state: GameState, my_player_index: int) -> Item:
-        if gold(game_state.player_state_list[my_player_index]) >= 5:
-            return Item.SPEED_POTION
-        return Item.NONE
-
-#generates all of the possible locations that a player at a given position can go to
 def generate_possible_locations(player_state: PlayerState):
     poss_locs = []
     center = player_state.position
@@ -184,4 +108,3 @@ def choosePositionAndAttack(game_state: GameState, my_player_index: int):
     if my_player_index == 1: 
         logging.info(best_attack)
     return (best_pos, int(best_attack))
-            
