@@ -1,0 +1,24 @@
+TLDR: From testing, it appears the best strategy (without exploitative ability) is to:
+1. Pick Knight
+2. Rush center
+3. If you can kill someone in one hit, attack that player
+4. If no one dies in one hit, attack player with highest no. of points\
+5. Buy speed potion when respawning if you have enough gold
+6. Use speed potion immediately to help reach mid in 1 less turn
+
+Test 1:
+- 2 player archer vs wizard
+- Rush center, attack each other when in range
+Result: Archer 140 Wizard 160
+
+Test 2:
+- 2 knights, 1 archer, 1 wizard
+- Rush center, if there is a player you can one shot, attack that player
+Result: Knights ended with 267 each, wizard with 125, archer with 100
+**IMPORTANT: From testing, it appears that if 2 players kill the same player that turn, the kill point goes to both players
+
+Test 3:
+- Knight, 3 wizards
+- Same strategy as before
+Result: Knight completely demolished the wizards
+

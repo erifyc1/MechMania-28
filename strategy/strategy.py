@@ -20,7 +20,7 @@ class Strategy(object):
         self.curr_action = Position(0,0)
         self.curr_pos_attack = 0
         if my_player_index == 0:
-            return game.character_class.CharacterClass.WIZARD
+            return game.character_class.CharacterClass.KNIGHT
         if my_player_index == 1:
             return game.character_class.CharacterClass.WIZARD
         if my_player_index == 2:
@@ -38,7 +38,7 @@ class Strategy(object):
     """
     @abstractmethod
     def use_action_decision(self, game_state: GameState, my_player_index: int) -> bool:
-        return False
+        return True
 
     """Each turn, pick a position on the board that you want to move towards. Be careful not to
     fall out of the board!
@@ -80,6 +80,8 @@ class Strategy(object):
     """
     @abstractmethod
     def buy_action_decision(self, game_state: GameState, my_player_index: int) -> Item:
+        if gold(game_state.player_state_list[my_player_index]) >= 5:
+            return Item.SPEED_POTION
         return Item.NONE
 
 #generates all of the possible locations that a player at a given position can go to
@@ -96,6 +98,12 @@ def generate_possible_locations(player_state: PlayerState):
 
 def hits_to_kill_enemy(player_state: PlayerState, enemy_state: PlayerState):
     return math.ceil(hp(enemy_state) / damage(player_state))
+
+def gold(player_state: PlayerState):
+    return player_state.gold
+
+def score(player_state: PlayerState):
+    return player_state.score
 
 def hp(player_state: PlayerState):
     return player_state.health
@@ -126,7 +134,7 @@ def isOneFromCenter(override_player_pos: Position, player_state: PlayerState):
     
 def can_attack(player1: PlayerState, player1pos: Position, player2pos: Position):
     p1_range = attack_range(player1)
-    return True if manhattan_distance(player1pos, player2pos) <= p1_range else False
+    return True if chebyshev_distance(player1pos, player2pos) <= p1_range else False
 
 def can_kill(player1: PlayerState, player2: PlayerState):
     return can_attack(player1, player1.position, player2.position) and (hp(player2) - damage(player1) <= 0)
