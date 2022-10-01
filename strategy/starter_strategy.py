@@ -25,6 +25,7 @@ class StarterStrategy(Strategy):
             next_pos.y = 5
 
 
+
         return next_pos
 
     def attack_action_decision(self, game_state: GameState, my_player_index: int) -> int:
