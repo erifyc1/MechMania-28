@@ -108,4 +108,9 @@ def isOneFromCenter(player_state: PlayerState):
         if isInCenter(pos):
             return True
     return False
+    
+def can_attack(player1: PlayerState, player1pos: Position, player2pos: Position):
+    p1_speed = speed(player1)
+    return True if chebyshev_distance(player1pos, player2pos) <= p1_speed else False
+
 
