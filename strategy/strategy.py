@@ -13,7 +13,9 @@ class Strategy(object):
     """
     @abstractmethod
     def strategy_initialize(self, my_player_index: int) -> None:
-        pass
+        self.index = my_player_index
+        self.curr_action = Position(0,0)
+        self.curr_attack = 0
 
     """Each turn, decide if you should use the item you're holding. Do not try to use the
     legendary Item.None!
@@ -25,6 +27,9 @@ class Strategy(object):
     """
     @abstractmethod
     def use_action_decision(self, game_state: GameState, my_player_index: int) -> bool:
+        position, attack = choosePositionAndAttack(game_state, my_player_index)
+        self.curr_action = position
+        self.curr_attack = attack
         pass
 
     """Each turn, pick a position on the board that you want to move towards. Be careful not to
@@ -37,7 +42,9 @@ class Strategy(object):
     """
     @abstractmethod
     def move_action_decision(self, game_state: GameState, my_player_index: int) -> Position:
-        pass
+        our_player = game_state.player_state_list[my_player_index]
+        our_player.position = self.curr_action
+        return self.curr_action
 
     """Each turn, pick a player you would like to attack. Feel free to be a pacifist and attack no
     one but yourself.
@@ -49,7 +56,7 @@ class Strategy(object):
     """
     @abstractmethod
     def attack_action_decision(self, game_state: GameState, my_player_index: int) -> int:
-        pass
+        return self.curr_attack
 
     """Each turn, pick an item you want to buy. Return Item.None if you don't think you can
     afford anything.
@@ -113,4 +120,25 @@ def can_attack(player1: PlayerState, player1pos: Position, player2pos: Position)
     p1_speed = speed(player1)
     return True if chebyshev_distance(player1pos, player2pos) <= p1_speed else False
 
+def can_kill(player1: PlayerState, player2: PlayerState):
+    return can_attack(player1, player1.position, player2.position) and (hp(player2) - player1.stat_set.damage <= 0)
 
+def choosePositionAndAttack(game_state: GameState, my_player_index: int):
+    our_state = game_state.player_state_list[my_player_index]
+    possible_positions = generate_possible_locations(our_state.position)
+    values = []
+    attacks = []
+    for pos in possible_positions:
+        value = 0
+        value -= distance_from_center(pos)
+        values.append((pos,value))
+    max_val = -100000
+    max_index = 0
+    for i in range(len(values)):
+        if values[i][1] > max_val:
+            max_val = values[i][1]
+            max_index = i
+    best_pos = values[max_index][0]
+    best_attack = attacks[max_index]
+    return (best_pos, best_attack)
+            
