@@ -19,11 +19,14 @@ class Strategy(object):
         self.index = my_player_index
         self.curr_action = Position(0,0)
         self.curr_pos_attack = 0
+        if my_player_index == 0:
+            return game.character_class.CharacterClass.WIZARD
         if my_player_index == 1:
-            return game.character_class.CharacterClass.ARCHER
+            return game.character_class.CharacterClass.WIZARD
         if my_player_index == 2:
             return game.character_class.CharacterClass.WIZARD
-        return game.character_class.CharacterClass.KNIGHT
+        else:
+            return game.character_class.CharacterClass.KNIGHT
 
     """Each turn, decide if you should use the item you're holding. Do not try to use the
     legendary Item.None!
@@ -49,7 +52,7 @@ class Strategy(object):
     def move_action_decision(self, game_state: GameState, my_player_index: int) -> Position:
         # our_player = game_state.player_state_list[my_player_index]
         # our_player.position = self.curr_action
-        if (my_player_index == 1 or my_player_index == 2):
+        if (my_player_index == 1 or my_player_index == 2 or my_player_index == 3 or my_player_index == 0):
             pos, _  = choosePositionAndAttack(game_state, my_player_index)
             return pos
         return Position(0,0)
@@ -122,8 +125,8 @@ def isOneFromCenter(override_player_pos: Position, player_state: PlayerState):
     return speed(player_state) >= distance_from_center(override_player_pos)
     
 def can_attack(player1: PlayerState, player1pos: Position, player2pos: Position):
-    p1_speed = speed(player1)
-    return True if chebyshev_distance(player1pos, player2pos) <= p1_speed else False
+    p1_range = attack_range(player1)
+    return True if manhattan_distance(player1pos, player2pos) <= p1_range else False
 
 def can_kill(player1: PlayerState, player2: PlayerState):
     return can_attack(player1, player1.position, player2.position) and (hp(player2) - damage(player1) <= 0)
