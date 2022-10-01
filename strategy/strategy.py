@@ -19,8 +19,11 @@ class Strategy(object):
         self.index = my_player_index
         self.curr_action = Position(0,0)
         self.curr_pos_attack = 0
-        random_char = np.random.randint(0,3)
-        return game.character_class.CharacterClass.WIZARD
+        if my_player_index == 1:
+            return game.character_class.CharacterClass.ARCHER
+        if my_player_index == 2:
+            return game.character_class.CharacterClass.WIZARD
+        return game.character_class.CharacterClass.KNIGHT
 
     """Each turn, decide if you should use the item you're holding. Do not try to use the
     legendary Item.None!
@@ -32,9 +35,6 @@ class Strategy(object):
     """
     @abstractmethod
     def use_action_decision(self, game_state: GameState, my_player_index: int) -> bool:
-        position, attack = choosePositionAndAttack(game_state, my_player_index)
-        self.curr_action = position
-        self.curr_pos_attack = attack
         return False
 
     """Each turn, pick a position on the board that you want to move towards. Be careful not to
@@ -49,8 +49,10 @@ class Strategy(object):
     def move_action_decision(self, game_state: GameState, my_player_index: int) -> Position:
         # our_player = game_state.player_state_list[my_player_index]
         # our_player.position = self.curr_action
-        pos, _  = choosePositionAndAttack(game_state, my_player_index)
-        return pos
+        if (my_player_index == 1 or my_player_index == 2):
+            pos, _  = choosePositionAndAttack(game_state, my_player_index)
+            return pos
+        return Position(0,0)
 
     """Each turn, pick a player you would like to attack. Feel free to be a pacifist and attack no
     one but yourself.
@@ -146,7 +148,8 @@ def choosePositionAndAttack(game_state: GameState, my_player_index: int):
             # braindead ranking system
             htk = hits_to_kill_enemy(our_state, enemy_state)
             curr_pos_attack[i] += -htk*damage(our_state) + (hp(enemy_state) - 1) % damage(our_state)
-
+            if can_attack(our_state, our_state.position, enemy_state.position):
+                curr_pos_attack[i] += 100
             enemy_moves = generate_possible_locations(enemy_state)
             count_of_center  = 0
             count_of_one_from_center = 0
@@ -167,6 +170,7 @@ def choosePositionAndAttack(game_state: GameState, my_player_index: int):
     max_index = np.argmax(values)
     best_pos = possible_positions[max_index]
     best_attack = attacks[max_index]
-    logging.info(best_attack)
+    if my_player_index == 1: 
+        logging.info(best_attack)
     return (best_pos, int(best_attack))
             
