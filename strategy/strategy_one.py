@@ -14,6 +14,7 @@ import strategy.strategy_utils as su
 
 class strategy_one(Strategy):
     def strategy_initialize(self, my_player_index: int):
+        logging.info(my_player_index)
         return game.character_class.CharacterClass.WIZARD
 
     def move_action_decision(self, game_state: GameState, my_player_index: int) -> Position:
@@ -72,6 +73,4 @@ def player_one_strategy(game_state: GameState, my_player_index: int):
     max_index = np.argmax(values)
     best_pos = possible_positions[max_index]
     best_attack = attacks[max_index]
-    if my_player_index == 1: 
-        logging.info(best_attack)
     return (best_pos, int(best_attack))

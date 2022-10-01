@@ -131,6 +131,7 @@ def main():
       phase = Phase.BUY
       continue
     if phase == Phase.BUY :
+      
       buy_action = BuyAction(player_index, strategy.buy_action_decision(game_state, player_index))
       client.write(jsonpickle.encode(buy_action, unpicklable=False))
       phase = Phase.USE

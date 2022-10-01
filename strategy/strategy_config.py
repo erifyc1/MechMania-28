@@ -14,11 +14,11 @@ from strategy.strategy_three import strategy_three
 """
 def get_strategy(player_index: int) -> Strategy:  
   if (player_index == 0):
-    return strategy_zero()
+    return strategy_two()
   elif(player_index == 1):
-    return strategy_one()
+    return strategy_two()
   elif(player_index == 2):
     return strategy_two()
   elif(player_index == 3):
-    return strategy_three()
+    return strategy_two()
   return Strategy()

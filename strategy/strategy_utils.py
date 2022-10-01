@@ -8,6 +8,7 @@ from util.utility import manhattan_distance, chebyshev_distance
 import math
 import numpy as np
 import logging
+from game.character_class import CharacterClass
 
 def generate_possible_locations(player_state: PlayerState):
     poss_locs = []
@@ -63,6 +64,9 @@ def can_attack(player1: PlayerState, player1pos: Position, player2pos: Position)
 def can_kill(player1: PlayerState, player2: PlayerState):
     return can_attack(player1, player1.position, player2.position) and (hp(player2) - damage(player1) <= 0)
 
+def can_kill(player1_position: Position, player2_position: Position, player1: PlayerState, player2: PlayerState):
+    return can_attack(player1, player1_position, player2_position) and (hp(player2) - damage(player1) <= 0)
+
 def choosePositionAndAttack(game_state: GameState, my_player_index: int):
     our_state = game_state.player_state_list[my_player_index]
     possible_positions = generate_possible_locations(our_state)
@@ -108,3 +112,35 @@ def choosePositionAndAttack(game_state: GameState, my_player_index: int):
     if my_player_index == 1: 
         logging.info(best_attack)
     return (best_pos, int(best_attack))
+
+
+def class_value(player_state: PlayerState):
+    c = player_state.character_class
+    if c == game.character_class.CharacterClass.ARCHER:
+        return 0
+    if c == game.character_class.CharacterClass.WIZARD:
+        return 1
+    if c == game.character_class.CharacterClass.KNIGHT:
+        return 2
+
+def is_dominating(game_state: GameState, my_player_index: int):
+    our_player_score = game_state.player_state_list[my_player_index].score
+    max_other_score = -1
+    for i in range(len(game_state.player_state_list)):
+        if not i == my_player_index:
+            if game_state.player_state_list[i].score > max_other_score:
+                max_other_score = game_state.player_state_list[i].score
+    return our_player_score > max_other_score + 10
+
+def at_spawn(position: Position, home_position: Position):
+    return position.x == home_position.x and position.y == home_position.y
+
+def my_home_position(player_index: int):
+    if player_index == 0:
+        return Position(0,0)
+    elif player_index == 1:
+        return Position(9,0)
+    elif player_index == 2:
+        return Position(9,9)
+    else:
+        return Position(0,9)
