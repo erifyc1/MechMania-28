@@ -63,7 +63,7 @@ class Strategy(object):
     def buy_action_decision(self, game_state: GameState, my_player_index: int) -> Item:
         pass
 
-def generate_possible_locations(player_state: PlayerState, game_state: GameState):
+def generate_possible_locations(player_state: PlayerState):
     poss_locs = []
     center = player_state.position
     s = speed(player_state)
@@ -97,3 +97,15 @@ def distance_from_center(pos: Position):
 
 def position(player_state: PlayerState):
     return player_state.position
+
+def isInCenter(pos: Position):
+    return distance_from_center == 0
+def isOneFromCenter(player_state: PlayerState):
+    if isInCenter(player_state.position):
+        return True
+    positions = generate_possible_locations(player_state)
+    for pos in positions:
+        if isInCenter(pos):
+            return True
+    return False
+
