@@ -9,4 +9,4 @@ from strategy.strategy import Strategy
 """
 def get_strategy(player_index: int) -> Strategy:  
   
-  return StarterStrategy()
+  return Strategy()

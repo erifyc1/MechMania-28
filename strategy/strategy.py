@@ -3,8 +3,11 @@ from game.game_state import GameState
 from game.item import Item
 from game.player_state import PlayerState
 from game.position import Position
+import game.character_class
 from util.utility import manhattan_distance, chebyshev_distance
 import math
+import numpy as np
+import logging
 
 class Strategy(object):
     """Before the game starts, pick a class for your bot to start with.
@@ -15,7 +18,9 @@ class Strategy(object):
     def strategy_initialize(self, my_player_index: int) -> None:
         self.index = my_player_index
         self.curr_action = Position(0,0)
-        self.curr_attack = 0
+        self.curr_pos_attack = 0
+        random_char = np.random.randint(0,3)
+        return game.character_class.CharacterClass.WIZARD
 
     """Each turn, decide if you should use the item you're holding. Do not try to use the
     legendary Item.None!
@@ -29,8 +34,8 @@ class Strategy(object):
     def use_action_decision(self, game_state: GameState, my_player_index: int) -> bool:
         position, attack = choosePositionAndAttack(game_state, my_player_index)
         self.curr_action = position
-        self.curr_attack = attack
-        pass
+        self.curr_pos_attack = attack
+        return False
 
     """Each turn, pick a position on the board that you want to move towards. Be careful not to
     fall out of the board!
@@ -42,9 +47,10 @@ class Strategy(object):
     """
     @abstractmethod
     def move_action_decision(self, game_state: GameState, my_player_index: int) -> Position:
-        our_player = game_state.player_state_list[my_player_index]
-        our_player.position = self.curr_action
-        return self.curr_action
+        # our_player = game_state.player_state_list[my_player_index]
+        # our_player.position = self.curr_action
+        pos, _  = choosePositionAndAttack(game_state, my_player_index)
+        return pos
 
     """Each turn, pick a player you would like to attack. Feel free to be a pacifist and attack no
     one but yourself.
@@ -56,7 +62,8 @@ class Strategy(object):
     """
     @abstractmethod
     def attack_action_decision(self, game_state: GameState, my_player_index: int) -> int:
-        return self.curr_attack
+        _, attack = choosePositionAndAttack(game_state, my_player_index)
+        return np.random.randint(0,4)#self.curr_pos_attack
 
     """Each turn, pick an item you want to buy. Return Item.None if you don't think you can
     afford anything.
@@ -68,16 +75,16 @@ class Strategy(object):
     """
     @abstractmethod
     def buy_action_decision(self, game_state: GameState, my_player_index: int) -> Item:
-        pass
+        return Item.NONE
 
 def generate_possible_locations(player_state: PlayerState):
     poss_locs = []
     center = player_state.position
     s = speed(player_state)
-    for x in range(max(center.x - s), min(center.x + s + 1, 10)):
-        for y in range(max(center.x - s), min(center.y + s + 1, 10)):
-            if manhattan_distance(center, Position(x, y)) <= s:
-                poss_locs.append(Position(x, y))
+    for xp in range(max(center.x - s, 0), min(center.x + s + 1, 10)):
+        for yp in range(max(center.y - s, 0), min(center.y + s + 1, 10)):
+            if manhattan_distance(center, Position(xp, yp)) <= s:
+                poss_locs.append(Position(xp, yp))
     return poss_locs
 
 
@@ -96,7 +103,7 @@ def damage(player_state: PlayerState):
 def speed(player_state: PlayerState):
     return player_state.stat_set.speed
 
-def range(player_state: PlayerState):
+def attack_range(player_state: PlayerState):
     return player_state.stat_set.range
 
 def distance_from_center(pos: Position):
@@ -106,39 +113,58 @@ def position(player_state: PlayerState):
     return player_state.position
 
 def isInCenter(pos: Position):
-    return distance_from_center == 0
-def isOneFromCenter(player_state: PlayerState):
-    if isInCenter(player_state.position):
-        return True
-    positions = generate_possible_locations(player_state)
-    for pos in positions:
-        if isInCenter(pos):
-            return True
-    return False
+    return distance_from_center(pos) == 0
+
+def isOneFromCenter(override_player_pos: Position, player_state: PlayerState):
+    return speed(player_state) >= distance_from_center(override_player_pos)
     
 def can_attack(player1: PlayerState, player1pos: Position, player2pos: Position):
     p1_speed = speed(player1)
     return True if chebyshev_distance(player1pos, player2pos) <= p1_speed else False
 
 def can_kill(player1: PlayerState, player2: PlayerState):
-    return can_attack(player1, player1.position, player2.position) and (hp(player2) - player1.stat_set.damage <= 0)
+    return can_attack(player1, player1.position, player2.position) and (hp(player2) - damage(player1) <= 0)
 
 def choosePositionAndAttack(game_state: GameState, my_player_index: int):
     our_state = game_state.player_state_list[my_player_index]
-    possible_positions = generate_possible_locations(our_state.position)
-    values = []
-    attacks = []
-    for pos in possible_positions:
-        value = 0
-        value -= distance_from_center(pos)
-        values.append((pos,value))
-    max_val = -100000
-    max_index = 0
-    for i in range(len(values)):
-        if values[i][1] > max_val:
-            max_val = values[i][1]
-            max_index = i
-    best_pos = values[max_index][0]
+    possible_positions = generate_possible_locations(our_state)
+    values = np.zeros(len(possible_positions))
+    attacks = np.zeros(len(possible_positions))
+    for idx, temp_pos in enumerate(possible_positions):
+        value = -distance_from_center(temp_pos)
+        values[idx] = value
+        stored_pos = our_state.position
+        curr_pos_attack = np.zeros(len(game_state.player_state_list))
+        our_state.position = temp_pos
+        for i in range(len(game_state.player_state_list)):
+            # make it so we don't attack ourselves
+            if i == my_player_index:
+                curr_pos_attack[i] = -100000 
+                break
+            enemy_state = game_state.player_state_list[i]
+            # braindead ranking system
+            htk = hits_to_kill_enemy(our_state, enemy_state)
+            curr_pos_attack[i] += -htk*damage(our_state) + (hp(enemy_state) - 1) % damage(our_state)
+
+            enemy_moves = generate_possible_locations(enemy_state)
+            count_of_center  = 0
+            count_of_one_from_center = 0
+            count_of_overlap_us = 0
+            count_of_overlap_them = 0
+            for enemy_move in enemy_moves:
+                if isInCenter(enemy_move):
+                    count_of_center += 1
+                elif isOneFromCenter(enemy_move, enemy_state):
+                    count_of_one_from_center += 1
+            # for tomorrow: disallow attacking of unreachable players
+            # if chebyshev_distance()
+            curr_pos_attack[i] += count_of_center
+            curr_pos_attack[i] += count_of_one_from_center * 0.2 # if enemy is one from center than add this 
+            
+        attacks[idx] = np.argmax(curr_pos_attack)
+        our_state.position = stored_pos
+    max_index = np.argmax(values)
+    best_pos = possible_positions[max_index]
     best_attack = attacks[max_index]
     return (best_pos, best_attack)
             
