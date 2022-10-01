@@ -15,7 +15,6 @@ import strategy.strategy_utils as su
 
 class strategy_zero(Strategy):
     def strategy_initialize(self, my_player_index: int):
-        logging.info(my_player_index)
         self.home = Position(9 * (my_player_index % 2), 9 * (my_player_index // 2))
         self.waypoints = [Position(1, 1), Position(2, 2), Position(3, 3), Position(4, 4)]
         self.followed_waypoints = False
@@ -58,7 +57,6 @@ class strategy_zero(Strategy):
     def attack_action_decision(self, game_state: GameState, my_player_index: int) -> int:
         state = game_state.player_state_list[my_player_index]
         best_attack = determine_best_attack(state.position, game_state, my_player_index)[0]
-        logging.info(best_attack)
         return best_attack
 
     def buy_action_decision(self, game_state: GameState, my_player_index: int) -> Item:
@@ -103,11 +101,10 @@ def determine_best_attack(tile: Position, game_state: GameState, my_player_index
     original_position = player_state.position
     player_state.position = tile
 
-    best_attack = (my_player_index, -100)
+    best_attack = (my_player_index, -1000)
     for enemy_id, enemy_state in enumerate(game_state.player_state_list):
-        if enemy_id == my_player_index or chebyshev_distance(player_state, enemy_state) > su.attack_range(player_state):
-            break
-
+        if enemy_id == my_player_index or chebyshev_distance(player_state.position, enemy_state.position) > su.attack_range(player_state):
+            pass # logging.info("failed: " + str(enemy_id) + " because " + str(my_player_index) + ", " + str(chebyshev_distance(player_state.position, enemy_state.position)))
         # htk value
         htk = su.hits_to_kill_enemy(player_state, enemy_state)
         htk_value = -htk * su.damage(player_state) + (su.hp(enemy_state) - 1) % su.damage(player_state)

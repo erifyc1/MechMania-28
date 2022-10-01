@@ -13,12 +13,4 @@ from strategy.strategy_three import strategy_three
 :returns: A Strategy object.
 """
 def get_strategy(player_index: int) -> Strategy:  
-  if (player_index == 0):
-    return strategy_two()
-  elif(player_index == 1):
-    return strategy_two()
-  elif(player_index == 2):
-    return strategy_two()
-  elif(player_index == 3):
-    return strategy_two()
-  return Strategy()
+  return strategy_one()

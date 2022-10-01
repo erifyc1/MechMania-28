@@ -20,12 +20,10 @@ class strategy_three(Strategy):
         return game.character_class.CharacterClass.ARCHER
 
     def move_action_decision(self, game_state: GameState, my_player_index: int) -> Position:
-        logging.info(my_player_index)
         my_state = game_state.player_state_list[my_player_index]
         safe_pos = safe_positions(game_state, my_player_index)
         #and self.just_used == False
         if (my_state.gold >= 8 and my_state.item == Item.NONE ) or su.hp(my_state) == 1:
-            logging.info("going back")
             return self.home_position
        #if no one is on center go
         if self.just_used == True:
@@ -38,11 +36,9 @@ class strategy_three(Strategy):
             #         return pos
             for pos in safe_pos:
                 if su.distance_from_center(pos) < cur_distance:
-                    logging.info("moving to center")
                     return pos
             return np.random.choice(safe_pos)
         else:
-            logging.info("staying")
             return my_state.position
 
 
@@ -53,7 +49,6 @@ class strategy_three(Strategy):
     def buy_action_decision(self, game_state: GameState, my_player_index: int) -> Item:
         my_state = game_state.player_state_list[my_player_index]
         if su.at_spawn(my_state.position, self.home_position) and my_state.gold >= 8 and my_state.item == Item.NONE:
-            logging.info("bought scope")
             return Item.HUNTER_SCOPE
         return Item.NONE
 
@@ -127,8 +122,6 @@ def player_three_strategy(game_state: GameState, my_player_index: int):
     max_index = np.argmax(values)
     best_pos = possible_positions[max_index]
     best_attack = attacks[max_index]
-    if my_player_index == 1: 
-        logging.info(best_attack)
     return (best_pos, int(best_attack))
 
 # class strategy_three(Strategy):

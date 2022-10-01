@@ -27,8 +27,6 @@ class strategy_two(Strategy):
 
     def attack_action_decision(self, game_state: GameState, my_player_index: int) -> int:
         attack = player_two_attack_strategy_updated(game_state, my_player_index)
-        logging.info("player two")
-        logging.info(attack)
         return attack
 
     def buy_action_decision(self, game_state: GameState, my_player_index: int) -> Item:
@@ -46,7 +44,7 @@ def player_two_attack_strategy_updated(game_state: GameState, my_player_index: i
         stored_enemy_position = enemy_state.position
         # make it so we don't attack ourselves
         if i == my_player_index:
-            flags[i][0] = -100000 
+            flags[i][0] = -1000000000 
         if su.can_attack(our_state, our_state.position, enemy_state.position):
             flags[i][0] = 1
         #if they can take center
@@ -62,7 +60,7 @@ def player_two_attack_strategy_updated(game_state: GameState, my_player_index: i
             flags[i][4] = 1
         if su.isOneFromCenter(enemy_state.position, enemy_state):
             flags[i][5] = 1
-        flags[i][6] = su.hits_to_kill_enemy(our_state, enemy_state)
+        flags[i][6] = -su.hits_to_kill_enemy(our_state, enemy_state)
         flags[i][7] = su.hp(enemy_state)
         if is_move:
             enemy_moves = su.generate_possible_locations(enemy_state)
@@ -87,10 +85,10 @@ def player_two_attack_strategy_updated(game_state: GameState, my_player_index: i
             flags[i][9]= count_of_overlap_us
             flags[i][10] = count_of_center
             flags[i][11] = count_of_one_from_center * 0.2 # if enemy is one from center than add this
-    curr_max = -100000000
-    ignore = []
+    curr_max = -10000000
+    ignore = [my_player_index]
     for i in range(flags.shape[1]):
-        curr_max = -100000000
+        curr_max = -10000000
         for j in range(flags.shape[0]):
             if not j == my_player_index and not j in ignore:
                 curr_val = flags[j][i]
@@ -172,32 +170,79 @@ def player_two_move_strategy(game_state: GameState, my_player_index: int, home_p
     possible_positions = su.generate_possible_locations(our_state)
     values = np.zeros(len(possible_positions))
     attacks = np.zeros(len(possible_positions))
-    for idx, temp_pos in enumerate(possible_positions):
-        value = -su.distance_from_center(temp_pos)
-        values[idx] = value
-        stored_pos = our_state.position
-        our_state.position = temp_pos
-        can_be_killed = False
-        for i in range(len(game_state.player_state_list)):
-            enemy_state = game_state.player_state_list[i]
-            if not i == my_player_index:
-                # if enemy can kill us decrease value 
-                if su.can_kill(enemy_state.position, our_state.position, enemy_state, our_state):
-                    logging.info("can be killed is checking")
-                    values[idx] -= 1
-            enemy_moves = su.generate_possible_locations(enemy_state)
-            stored_enemy_position = enemy_state.position
-            
-            for enemy_move in enemy_moves:
-                enemy_state.position = enemy_move
-                if su.can_kill(enemy_state.position, our_state.position, enemy_state, our_state):
-                    logging.info("can be killed is checking")
-                    can_be_killed = True
-                enemy_state.position = stored_enemy_position
-        if can_be_killed:
-            values[idx] -= 1
-        attacks[idx] = player_two_attack_strategy_updated(game_state, my_player_index, True)
-        our_state.position = stored_pos
+    if isInCenter(our_state.position):
+        values = np.zeros(4) #1 = (4,4), 2 = (4, 5), 3 = (5,4), 4 = (5,5)
+        square_1 = Position(4,4)
+        square_2 = Position(4,5)
+        square_3 = Position(5,4)
+        square_4 = Position(5,5)
+        squares = [square_1, square_2, square_3, square_4]
+        flags = np.zeros((4,3))
+        index = 0
+        for j in range(len(squares)):
+            our_state.position = squares[j]
+            damage_square = 0
+            damage_us = 0
+            for i in range(len(game_state.player_state_list)):
+                enemy_state = game_state.player_state_list[i]
+                if not i == my_player_index:
+                    enemy_moves = su.generate_possible_locations(enemy_state)
+                    stored_enemy_position = enemy_state.position
+                    for enemy_move in enemy_moves:
+                        enemy_state.position = enemy_move
+                        if can_attack(enemy_state, enemy_state.position, our_state.position):
+                            damage_square += damage(enemy_state)
+                        if can_attack(our_state, our_state.position, enemy_state.position):
+                            damage_square += damage(our_state)
+            if damage_us > damage_square:
+                flags[j][0] = 1
+            else:
+                flags[j][0] = 0
+            flags[j][1] = -damage_square
+            flags[j][2] = damage_us
+            index += 1
+        curr_max = -100000000
+        ignore = []
+        for i in range(flags.shape[1]):
+            curr_max = -100000000
+            for j in range(flags.shape[0]):
+                if not j == my_player_index and not j in ignore:
+                    curr_val = flags[j][i]
+                    if curr_val > curr_max:
+                        curr_max = curr_val
+            for j in range(flags.shape[0]):
+                if flags[j][i] < curr_max:
+                    ignore.append(j)
+        curr_pick = 0
+        for i in range(flags.shape[0]):
+            if i not in ignore:
+                curr_pick = i
+        return (squares[curr_pick], player_two_attack_strategy_updated(game_state, my_player_index, True))
+    else:
+        for idx, temp_pos in enumerate(possible_positions):
+            value = -su.distance_from_center(temp_pos)
+            values[idx] = value
+            stored_pos = our_state.position
+            our_state.position = temp_pos
+            can_be_killed = False
+            for i in range(len(game_state.player_state_list)):
+                enemy_state = game_state.player_state_list[i]
+                if not i == my_player_index:
+                    # if enemy can kill us decrease value 
+                    if su.can_kill(enemy_state.position, our_state.position, enemy_state, our_state):
+                        values[idx] -= 1
+                enemy_moves = su.generate_possible_locations(enemy_state)
+                stored_enemy_position = enemy_state.position
+                
+                for enemy_move in enemy_moves:
+                    enemy_state.position = enemy_move
+                    if su.can_kill(enemy_state.position, our_state.position, enemy_state, our_state):
+                        can_be_killed = True
+                    enemy_state.position = stored_enemy_position
+            if can_be_killed:
+                values[idx] -= 1
+            attacks[idx] = player_two_attack_strategy_updated(game_state, my_player_index, True)
+            our_state.position = stored_pos
     if our_state.item == Item.NONE and is_dominating(game_state, my_player_index) and our_state.gold >= 8:
         return (home_position, 0)
     max_index = np.argmax(values)
