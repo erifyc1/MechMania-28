@@ -63,7 +63,7 @@ class Strategy(object):
     @abstractmethod
     def attack_action_decision(self, game_state: GameState, my_player_index: int) -> int:
         _, attack = choosePositionAndAttack(game_state, my_player_index)
-        return np.random.randint(0,4)#self.curr_pos_attack
+        return attack#self.curr_pos_attack
 
     """Each turn, pick an item you want to buy. Return Item.None if you don't think you can
     afford anything.
@@ -77,6 +77,7 @@ class Strategy(object):
     def buy_action_decision(self, game_state: GameState, my_player_index: int) -> Item:
         return Item.NONE
 
+#generates all of the possible locations that a player at a given position can go to
 def generate_possible_locations(player_state: PlayerState):
     poss_locs = []
     center = player_state.position
@@ -160,11 +161,12 @@ def choosePositionAndAttack(game_state: GameState, my_player_index: int):
             # if chebyshev_distance()
             curr_pos_attack[i] += count_of_center
             curr_pos_attack[i] += count_of_one_from_center * 0.2 # if enemy is one from center than add this 
-            
+
         attacks[idx] = np.argmax(curr_pos_attack)
         our_state.position = stored_pos
     max_index = np.argmax(values)
     best_pos = possible_positions[max_index]
     best_attack = attacks[max_index]
-    return (best_pos, best_attack)
+    logging.info(best_attack)
+    return (best_pos, int(best_attack))
             
